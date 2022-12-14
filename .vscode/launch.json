@@ -20,7 +20,12 @@
                     "kind": "bin"
                 }
             },
-            "args": [],
+            "args": [
+                "-e",
+                "(.*)",
+                "echo",
+                "{1}"
+            ],
             "cwd": "${workspaceFolder}"
         },
         {
