@@ -1,0 +1,47 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'xbat'",
+            "preLaunchTask": "rust: cargo build",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=xbat",
+                    "--package=xbat"
+                ],
+                "filter": {
+                    "name": "xbat",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'xbat'",
+            "preLaunchTask": "rust: cargo build",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=xbat",
+                    "--package=xbat"
+                ],
+                "filter": {
+                    "name": "xbat",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
