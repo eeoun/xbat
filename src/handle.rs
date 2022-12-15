@@ -1,6 +1,6 @@
 use crate::work_opts::Config;
 use lazy_static::lazy_static;
-use nix::unistd::execvp;
+use nix::{libc::fork, unistd::execvp};
 use regex::Regex;
 use std::{ffi::CString, process::exit};
 
@@ -51,6 +51,10 @@ fn parse_capture<'a>(splite_single_line: &'a str, conf: &'a Config) -> Vec<&'a s
     inputs
 }
 
+fn to_cstr(inn: &String) -> CString {
+    CString::new(inn.as_str()).unwrap()
+}
+
 fn eval(capture_from_single_splite: &Vec<&str>, conf: &Config) {
     let command_and_args: Vec<String> = conf
         .commands
@@ -64,22 +68,30 @@ fn eval(capture_from_single_splite: &Vec<&str>, conf: &Config) {
 
     let mut it = command_and_args.iter();
 
-    let exec_command = CString::new(it.next().unwrap().as_str()).unwrap();
+    let exec_command = to_cstr(it.next().unwrap());
 
-    let exec_args: Vec<CString> = it.map(|x| CString::new(x.as_str()).unwrap()).collect();
+    let exec_command_on_args = exec_command.clone();
 
-    if conf.verbose {
-        print!("Eval command\n");
+    let mut exec_args: Vec<CString> = Vec::new();
+    exec_args.push(exec_command_on_args);
+
+    it.map(|x| to_cstr(x)).for_each(|x| exec_args.push(x));
+
+    let pid = unsafe { fork() };
+
+    if -1 == pid {
+        exit(1);
+    } else if 0 == pid {
+        match execvp(&exec_command, &exec_args) {
+            Ok(_x) => {
+                print!("ok\n")
+            }
+            Err(_e) => {
+                print!("err\n")
+            }
+        };
+    } else {
     }
-    match execvp(&exec_command, &exec_args) {
-        Ok(_x) => {
-            print!("ok")
-        }
-        Err(_e) => {
-            print!("err")
-        }
-    };
-    println!("xxxx")
 }
 
 fn fullfill_string(captuers: &Vec<&str>, orig_str: &str, conf: &Config) -> String {

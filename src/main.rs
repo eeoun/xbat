@@ -4,8 +4,9 @@ mod work_opts;
 
 use handle::eval_config;
 use std::env;
-use std::fs;
 use std::io;
+use std::io::Read;
+use std::process::Stdio;
 use work_opts::Config;
 use Default;
 
@@ -14,20 +15,21 @@ use Default;
  *  ls ｜ xbat -e default(\d+).jpg ccx $0 $1 $2
  *
  */
-fn main() {
-    let mut buffer = String::new();
+fn main() -> Result<(), std::io::Error> {
+    let stdin = io::stdin();
+    let mut handle = stdin.lock();
 
-    buffer = fs::read_to_string("./f.txt").expect("Should have been able to read the file");
+    let mut all_from_pipe = String::new();
 
-    // let mut lines = io::stdin().lines();
-    // while let Some(line) = lines.next() {
-    //     match line {
-    //         Ok(line_str) => {
-    //             buffer.push_str(line_str.as_str());
-    //         }
-    //         _ => {}
-    //     }
-    // }
+    let mut buf = String::new();
+
+    while let Ok(n_bytes) = handle.read_to_string(&mut buf) {
+        if n_bytes == 0 {
+            break;
+        }
+        all_from_pipe.push_str(buf.as_str());
+        buf.clear();
+    }
 
     let mut conf: Config = Default::default();
 
@@ -42,5 +44,6 @@ fn main() {
         }
     }
     arg_parse::parse_lr(&opts_and_commands, &mut conf);
-    eval_config(&buffer, &conf);
+    eval_config(&all_from_pipe, &conf);
+    Ok(())
 }
