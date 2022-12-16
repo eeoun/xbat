@@ -7,8 +7,12 @@ edition = "2021"
 
 [dependencies]
 regex = "1.7.0"
-nix = "0.26.1"
 lazy_static = "1.4.0"
+
+[dependencies.nix]
+version = "0.26.1"
+default-features = false
+features = ["process"]
 
 [dependencies.clap]
 version = "4.0.29"
