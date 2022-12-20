@@ -1,6 +1,6 @@
 use crate::work_opts::Config;
 use lazy_static::lazy_static;
-use nix::{libc::fork, unistd::execvp};
+use nix::{libc::fork, unistd::execvp, sys::wait::waitpid};
 use regex::Regex;
 use std::{ffi::CString, process::exit};
 
@@ -91,6 +91,7 @@ fn eval(capture_from_single_splite: &Vec<&str>, conf: &Config) {
             }
         };
     } else {
+        waitpid(Some(nix::unistd::Pid::from_raw(-1)), None);
     }
 }
 
