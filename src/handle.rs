@@ -96,8 +96,8 @@ fn eval(capture_from_single_splite: &Vec<&str>, conf: &Config) -> i32 {
         0
     } else {
         match waitpid(Some(nix::unistd::Pid::from_raw(-1)), None) {
-            Ok(_s) => 1,
-            Err(_e) => 0,
+            Ok(_s) => 0,
+            Err(_e) => 1,
         }
     }
 }
