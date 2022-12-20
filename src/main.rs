@@ -6,7 +6,6 @@ use handle::eval_config;
 use std::env;
 use std::io;
 use std::io::Read;
-use std::process::Stdio;
 use work_opts::Config;
 use Default;
 
@@ -15,7 +14,7 @@ use Default;
  *  ls ｜ xbat -e default(\d+).jpg ccx $0 $1 $2
  *
  */
-fn main() -> Result<(), std::io::Error> {
+fn main() -> Result<(), i32> {
     let stdin = io::stdin();
     let mut handle = stdin.lock();
 
@@ -44,6 +43,11 @@ fn main() -> Result<(), std::io::Error> {
         }
     }
     arg_parse::parse_lr(&opts_and_commands, &mut conf);
-    eval_config(&all_from_pipe, &conf);
-    Ok(())
+    let exec_ret = eval_config(&all_from_pipe, &conf);
+
+    if 0 == exec_ret {
+        Ok(())
+    } else {
+        Err(exec_ret)
+    }
 }

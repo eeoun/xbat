@@ -1,10 +1,12 @@
 use crate::work_opts::Config;
 use lazy_static::lazy_static;
-use nix::{libc::fork, unistd::execvp, sys::wait::waitpid};
+use nix::{libc::fork, sys::wait::waitpid, unistd::execvp};
 use regex::Regex;
 use std::{ffi::CString, process::exit};
 
-pub(crate) fn eval_config(input_need_to_splite: &String, conf: &Config) {
+pub(crate) fn eval_config(input_need_to_splite: &String, conf: &Config)->i32 {
+    let mut ret_val = 0;
+
     let mut lines: Box<dyn Iterator<Item = &str>> = if conf.spliter.is_none() {
         Box::new(input_need_to_splite.lines())
     } else {
@@ -21,8 +23,9 @@ pub(crate) fn eval_config(input_need_to_splite: &String, conf: &Config) {
 
     lines.for_each(|x| {
         let capture_from_single_splite = parse_capture(x, conf);
-        eval(&capture_from_single_splite, conf);
+        ret_val += eval(&capture_from_single_splite, conf);
     });
+    ret_val
 }
 
 ///
@@ -55,7 +58,7 @@ fn to_cstr(inn: &String) -> CString {
     CString::new(inn.as_str()).unwrap()
 }
 
-fn eval(capture_from_single_splite: &Vec<&str>, conf: &Config) {
+fn eval(capture_from_single_splite: &Vec<&str>, conf: &Config) -> i32 {
     let command_and_args: Vec<String> = conf
         .commands
         .iter()
@@ -78,9 +81,9 @@ fn eval(capture_from_single_splite: &Vec<&str>, conf: &Config) {
     it.map(|x| to_cstr(x)).for_each(|x| exec_args.push(x));
 
     let pid = unsafe { fork() };
-
+    // 父进程发生错误
     if -1 == pid {
-        exit(1);
+        1
     } else if 0 == pid {
         match execvp(&exec_command, &exec_args) {
             Ok(_x) => {
@@ -90,8 +93,12 @@ fn eval(capture_from_single_splite: &Vec<&str>, conf: &Config) {
                 print!("err\n")
             }
         };
+        0
     } else {
-        waitpid(Some(nix::unistd::Pid::from_raw(-1)), None);
+        match waitpid(Some(nix::unistd::Pid::from_raw(-1)), None) {
+            Ok(_s) => 1,
+            Err(_e) => 0,
+        }
     }
 }
 
@@ -143,7 +150,7 @@ fn fullfill_string(captuers: &Vec<&str>, orig_str: &str, conf: &Config) -> Strin
         if NUMBER_NIC.is_match(slice) {
             if last != left {
                 com.push_str(&orig_str[last..left]);
-                last = left;
+                // last = left; 可以不需要，因为立马 就会将last设置为右边界处
             }
 
             let caps = NUMBER_NIC
